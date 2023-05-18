@@ -22,7 +22,7 @@ setUp:
       rules_folder_recursion: true
   alert:
     alertmanager:
-      #url: "http://localhost:9003/api/v2/alerts"
+      # url: "http://localhost:9003/api/v2/alerts"
       enabled: false
       url: "http://localhost:9093/api/v2/alerts"
       basic_auth:
@@ -56,15 +56,15 @@ rules:
     password: ""
 
 extraVolumes: []
-#extraVolumes:
-#  - name: custom-rules-configmap
-#    configMap:
-#      name: custom-rules-config
+# extraVolumes:
+#   - name: custom-rules-configmap
+#     configMap:
+#       name: custom-rules-config
 
 extraVolumeMounts: []
-#extraVolumeMounts:
-#  - name: custom-rules-configmap
-#    mountPath: /rules/custom-rules
+# extraVolumeMounts:
+#   - name: custom-rules-configmap
+#     mountPath: /rules/custom-rules
 
 imagePullSecrets: []
 nameOverride: ""
