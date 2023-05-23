@@ -2,10 +2,7 @@ package utils
 
 import (
 	"crypto/md5"
-	"database/sql"
 	"fmt"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"os"
 )
 
@@ -44,12 +41,4 @@ func ESIdsLenLimit(ids []string) []string {
 	} else {
 		return ids[:30]
 	}
-}
-
-func PrepareTestDB(sqlDB *sql.DB) (db *gorm.DB) {
-	db, _ = gorm.Open(mysql.New(mysql.Config{
-		SkipInitializeWithVersion: true,
-		Conn:                      sqlDB,
-	}), &gorm.Config{})
-	return
 }
