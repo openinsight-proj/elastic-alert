@@ -48,12 +48,13 @@ spec:
           command:
             - /bin/prometheus-config-reloader
           args:
-            - '--watch-interval=0'
-            - '--listen-address=:8080'
+            - '--watch-interval=5s'
+            - '--listen-address=:8081'
             - '--watched-dir=/rules' # non-recursively: https://github.com/prometheus-operator/prometheus-operator/blob/70e9708371a6dbdad716deab4fc6fc9a2d89ed1b/cmd/prometheus-config-reloader/main.go#LL65C2-L65C12
+            - '--reload-url=http://127.0.0.1:8080/-/reload'
           ports:
             - name: reloader-web
-              containerPort: 8080
+              containerPort: 8081
               protocol: TCP
           resources:
             {{- toYaml .Values.configReloader.resources | nindent 12 }}

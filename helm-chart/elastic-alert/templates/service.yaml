@@ -11,5 +11,9 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    - port: 8081
+      targetPort: reloader-web
+      protocol: TCP
+      name: reloader-web
   selector:
     {{- include "elastic-alert.selectorLabels" . | nindent 4 }}

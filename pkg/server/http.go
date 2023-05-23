@@ -1,10 +1,12 @@
 package server
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/openinsight-proj/elastic-alert/pkg/boot"
 	"github.com/openinsight-proj/elastic-alert/pkg/conf"
 	"github.com/openinsight-proj/elastic-alert/pkg/server/controller"
+	"github.com/openinsight-proj/elastic-alert/pkg/server/serializer"
 	"github.com/openinsight-proj/elastic-alert/pkg/utils/logger"
 )
 
@@ -26,8 +28,10 @@ func (s *HttpServer) InitHttpServer() {
 func (s *HttpServer) newRouter() *gin.Engine {
 	r := gin.Default()
 
-	r.GET("/reload", func(c *gin.Context) {
+	cgRoute := r.Group("-")
+	cgRoute.POST("/reload", func(c *gin.Context) {
 		s.Ea.Loader.ReloadSchedulerJob(s.Ea)
+		serializer.SuccessDataRes(c, "ok", fmt.Sprintf("get all rules success"))
 	})
 
 	v1Route := r.Group("/v1")
