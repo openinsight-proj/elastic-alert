@@ -43,9 +43,6 @@ func main() {
 
 	c := conf.GetAppConfig(opts.ConfigPath)
 
-	//init http server
-	go server.InitHttpServer(c)
-
 	// only set up redis when alertmanager enabled.
 	if conf.AppConf.Alert.Alertmanager.Enabled {
 		redis.Setup()
@@ -53,6 +50,13 @@ func main() {
 
 	ea := boot.NewElasticAlert(c, &opts)
 	ea.Start()
+
+	//init http server
+	s := server.HttpServer{
+		ServerConfig: c,
+		Ea:           ea,
+	}
+	go s.InitHttpServer()
 
 	if c.Exporter.Enabled {
 		metrics := boot.NewRuleStatusCollector(ea)

@@ -2,23 +2,33 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/openinsight-proj/elastic-alert/pkg/boot"
 	"github.com/openinsight-proj/elastic-alert/pkg/conf"
 	"github.com/openinsight-proj/elastic-alert/pkg/server/controller"
 	"github.com/openinsight-proj/elastic-alert/pkg/utils/logger"
 )
 
-func InitHttpServer(serverConfig *conf.AppConfig) {
-	if serverConfig.Server.Enabled {
-		router := NewRouter()
-		err := router.Run(serverConfig.Server.ListenAddr)
+type HttpServer struct {
+	ServerConfig *conf.AppConfig
+	Ea           *boot.ElasticAlert
+}
+
+func (s *HttpServer) InitHttpServer() {
+	if s.ServerConfig.Server.Enabled {
+		router := s.newRouter()
+		err := router.Run(s.ServerConfig.Server.ListenAddr)
 		if err != nil {
 			logger.Logger.Errorf("init http server failed: %s", err.Error())
 		}
 	}
 }
 
-func NewRouter() *gin.Engine {
+func (s *HttpServer) newRouter() *gin.Engine {
 	r := gin.Default()
+
+	r.GET("/reload", func(c *gin.Context) {
+		s.Ea.Loader.ReloadSchedulerJob(s.Ea)
+	})
 
 	v1Route := r.Group("/v1")
 
