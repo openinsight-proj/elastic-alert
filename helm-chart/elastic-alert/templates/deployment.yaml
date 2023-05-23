@@ -42,7 +42,7 @@ spec:
         {{- if .Values.extraVolumes }}
         {{- toYaml .Values.extraVolumes | nindent 8 }}
         {{- end }}
-      initContainers:
+      containers:
         - name: init-config-reloader
           image: "{{ .Values.configReloader.image.registry }}/{{ .Values.configReloader.image.repository }}:{{ .Values.configReloader.image.tag }}"
           command:
@@ -66,7 +66,6 @@ spec:
             {{- if .Values.extraVolumeMounts }}
             {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
             {{- end }}
-      containers:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -84,8 +83,11 @@ spec:
             {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
             {{- end }}
           ports:
-            - name: http
+            - name: metrics
               containerPort: 9003
+              protocol: TCP
+            - name: http
+              containerPort: 8080
               protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

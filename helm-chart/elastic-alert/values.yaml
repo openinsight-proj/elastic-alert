@@ -9,7 +9,7 @@ image:
   repository: openinsight-proj/elastic-alert
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "elastic-alert:d1be3fe029f7ac3b0d73ef723c9dfbaa1a930056"
+  tag: "f895106ab9907e47fe93c012d4aec2a52c049292"
 
 configReloader:
   image:
@@ -27,6 +27,9 @@ configReloader:
 #      memory: 10Mi
 
 setUp:
+  server:
+    enabled: true
+    listen_addr: ":8080"
   exporter:
     enabled: true
     listen_addr: ":9003"
@@ -117,7 +120,7 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 9003
+  port: 8080
 
 ingress:
   enabled: false

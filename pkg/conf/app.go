@@ -31,7 +31,7 @@ type Datasource struct {
 // AppConfig is application global configure
 type AppConfig struct {
 	Server struct {
-		ListenAddr string     `yaml:"listen_addr" default:":9003"`
+		ListenAddr string     `yaml:"listen_addr" default:":8080"`
 		Enabled    bool       `yaml:"enabled" default:"true"`
 		DB         Datasource `yaml:"datasource"`
 	} `yaml:"server"`
