@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/openinsight-proj/elastic-alert/pkg/server"
 	"net/http"
 	"os"
 	"os/signal"
@@ -41,6 +42,9 @@ func main() {
 	xtime.FixedZone(opts.Zone)
 
 	c := conf.GetAppConfig(opts.ConfigPath)
+
+	//init http server
+	go server.InitHttpServer(c)
 
 	// only set up redis when alertmanager enabled.
 	if conf.AppConf.Alert.Alertmanager.Enabled {

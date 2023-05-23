@@ -1,6 +1,11 @@
+server:
+  enabled: true
+  listen_addr: ":8080"
+
 exporter:
   enabled: true
   listen_addr: ":9003"
+
 loader:
   type: "FileLoader"
   config:
