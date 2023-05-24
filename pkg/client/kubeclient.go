@@ -68,9 +68,12 @@ func GetClientSet() (cclientset *kubernetes.Clientset, err error) {
 
 	clientset, err = kubernetes.NewForConfig(config)
 	if err != nil {
-		return clientset, err
+		return nil, err
 	}
 	gClientset = clientset
 
-	return clientset, nil
+	v, err := gClientset.ServerVersion()
+	logger.Logger.Infof("kube client with server version: %s", v.String())
+
+	return gClientset, nil
 }
