@@ -3,6 +3,20 @@ entries:
   elastic-alert:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2023-05-26T05:25:23.995543634Z"
+    description: A Helm chart for Kubernetes
+    digest: 323392e3e093bfa36cbb5edf6b977f4036b3872cbea823a471055f27afb761ff
+    maintainers:
+    - name: JaredTan95
+    name: elastic-alert
+    sources:
+    - https://github.com/openinsight-proj/elastic-alert
+    type: application
+    urls:
+    - https://github.com/openinsight-proj/elastic-alert/releases/download/elastic-alert-0.0.10/elastic-alert-0.0.10.tgz
+    version: 0.0.10
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2023-05-25T09:24:51.660114199Z"
     description: A Helm chart for Kubernetes
     digest: 194852f19ab919b73adea0ef81946261b9e44e6cfaa5b2ab944769738fcb10c4
@@ -113,4 +127,4 @@ entries:
     urls:
     - https://github.com/openinsight-proj/elastic-alert/releases/download/elastic-alert-0.0.2/elastic-alert-0.0.2.tgz
     version: 0.0.2
-generated: "2023-05-25T09:24:51.6601727Z"
+generated: "2023-05-26T05:25:23.995582335Z"
