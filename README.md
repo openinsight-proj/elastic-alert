@@ -10,7 +10,7 @@ The code is provided as-is with no warranties. Beta features are not subject to 
 Once Helm is set up properly, add the repo as follows:
 
 ```bash
-$ helm repo add openinsight-proj https://openinsight-proj.github.io/elastic-alert
+$ helm repo add openinsight-proj https://openinsightio.github.io/elastic-alert
 ```
 
 You can then run `helm search repo openinsight-proj` to see the charts.
