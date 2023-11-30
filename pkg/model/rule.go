@@ -49,14 +49,7 @@ type Rule struct {
 
 type BooleanQuery string
 
-func getDefaultBooleanQuery() map[string]any {
-	booleanQuery := make(map[string]any)
-	defaultBooleanQuery := []byte(`{"bool":{"filter":[{"term":{"tag.keyword":{"value":"dump"}}}]}}`)
-	json.Unmarshal(defaultBooleanQuery, &booleanQuery)
-
-	return booleanQuery
-}
-
+// addTimeRangeFilter will add or override a time range clause into bool.filter clause
 func addTimeRangeFilter(booleanQuery map[string]any, start, end time.Time) map[string]any {
 	timeRange := map[string]any{
 		"range": map[string]any{
@@ -67,12 +60,29 @@ func addTimeRangeFilter(booleanQuery map[string]any, start, end time.Time) map[s
 			},
 		},
 	}
-	// pre-check booleanQuery have expected struct
-	if booleanQuery["bool"] == nil || booleanQuery["bool"].(map[string]any)["filter"] == nil {
-		booleanQuery = getDefaultBooleanQuery()
+
+	// check bool exist
+	if booleanQuery["bool"] == nil {
+		return booleanQuery
 	}
-	if _, ok := booleanQuery["bool"].(map[string]any)["filter"].([]any); !ok {
-		booleanQuery = getDefaultBooleanQuery()
+
+	// check filter exist in bool
+	if _, ok := booleanQuery["bool"].(map[string]any)["filter"]; !ok {
+		b := booleanQuery["bool"].(map[string]any)
+		b["filter"] = []any{timeRange}
+		return booleanQuery
+	}
+
+	// loop each filterList and delete exist range time
+	if fl, ok := booleanQuery["bool"].(map[string]any)["filter"].([]any); ok {
+		for index, v := range fl {
+			if value, ok := v.(map[string]any); ok && value["range"] != nil {
+				if r, ok := value["range"].(map[string]any); ok && r["time"] != nil {
+					booleanQuery["bool"].(map[string]any)["filter"] = append(booleanQuery["bool"].(map[string]any)["filter"].([]any)[:index], booleanQuery["bool"].(map[string]any)["filter"].([]any)[index+1:]...)
+					break
+				}
+			}
+		}
 	}
 
 	booleanQuery["bool"].(map[string]any)["filter"] = append(booleanQuery["bool"].(map[string]any)["filter"].([]any), timeRange)
@@ -81,7 +91,7 @@ func addTimeRangeFilter(booleanQuery map[string]any, start, end time.Time) map[s
 }
 
 func (b BooleanQuery) GetDSL(from int, size int, start time.Time, end time.Time) string {
-	booleanQuery := getDefaultBooleanQuery()
+	booleanQuery := make(map[string]any)
 	err := json.Unmarshal([]byte(b), &booleanQuery)
 	if err != nil {
 		logger.Logger.Errorln(fmt.Sprintf("error Unmarshal booleanQuery: %q, error message: %q, use a default booleanQuery.", b, err.Error()))
@@ -103,7 +113,7 @@ func (b BooleanQuery) GetDSL(from int, size int, start time.Time, end time.Time)
 }
 
 func (b BooleanQuery) GetCountDSL(start time.Time, end time.Time) string {
-	booleanQuery := getDefaultBooleanQuery()
+	booleanQuery := make(map[string]any)
 	err := json.Unmarshal([]byte(b), &booleanQuery)
 	if err != nil {
 		logger.Logger.Errorln(fmt.Sprintf("error Unmarshal booleanQuery: %q, error message: %q, use a default booleanQuery.", b, err.Error()))

@@ -26,15 +26,27 @@ func TestBooleanQueryGetDSL(t *testing.T) {
 		dsl := b.GetDSL(from, size, start, end)
 		require.Equal(t, expectDSL, dsl)
 	})
-	t.Run("test build boolean query with empty string", func(t *testing.T) {
+	t.Run("test empty BooleanQuery", func(t *testing.T) {
 		b := BooleanQuery("")
-		expectDSL := `{"from":1,"query":{"bool":{"filter":[{"term":{"tag.keyword":{"value":"dump"}}},{"range":{"time":{"format":"strict_date_optional_time","gte":"2023-11-28T15:57:20Z","lte":"2023-11-28T16:02:20Z"}}}]}},"size":10,"sort":[{"time":{"order":"asc"}}]}`
+		expectDSL := `{"from":1,"query":{},"size":10,"sort":[{"time":{"order":"asc"}}]}`
 		dsl := b.GetDSL(from, size, start, end)
 		require.Equal(t, expectDSL, dsl)
 	})
-	t.Run("test build boolean query with out filter", func(t *testing.T) {
+	t.Run("test miss bool clause in BooleanQuery", func(t *testing.T) {
+		b := BooleanQuery(`{"match":[{"query_string":{"query":"log:error"}}]}`)
+		expectDSL := `{"from":1,"query":{"match":[{"query_string":{"query":"log:error"}}]},"size":10,"sort":[{"time":{"order":"asc"}}]}`
+		dsl := b.GetDSL(from, size, start, end)
+		require.Equal(t, expectDSL, dsl)
+	})
+	t.Run("test miss filter clause in bool clause", func(t *testing.T) {
 		b := BooleanQuery(`{"bool":{"match":[{"query_string":{"query":"log:error"}}]}}`)
-		expectDSL := `{"from":1,"query":{"bool":{"filter":[{"term":{"tag.keyword":{"value":"dump"}}},{"range":{"time":{"format":"strict_date_optional_time","gte":"2023-11-28T15:57:20Z","lte":"2023-11-28T16:02:20Z"}}}]}},"size":10,"sort":[{"time":{"order":"asc"}}]}`
+		expectDSL := `{"from":1,"query":{"bool":{"filter":[{"range":{"time":{"format":"strict_date_optional_time","gte":"2023-11-28T15:57:20Z","lte":"2023-11-28T16:02:20Z"}}}],"match":[{"query_string":{"query":"log:error"}}]}},"size":10,"sort":[{"time":{"order":"asc"}}]}`
+		dsl := b.GetDSL(from, size, start, end)
+		require.Equal(t, expectDSL, dsl)
+	})
+	t.Run("test exist time range in filter clause", func(t *testing.T) {
+		b := BooleanQuery(`{"bool":{"filter":[{"range":{"time":{"format":"strict_date_optional_time","gte":"2022-11-28T15:57:20Z","lte":"2022-11-28T16:02:20Z"}}},{"query_string":{"query":"log:error"}}]}}`)
+		expectDSL := `{"from":1,"query":{"bool":{"filter":[{"query_string":{"query":"log:error"}},{"range":{"time":{"format":"strict_date_optional_time","gte":"2023-11-28T15:57:20Z","lte":"2023-11-28T16:02:20Z"}}}]}},"size":10,"sort":[{"time":{"order":"asc"}}]}`
 		dsl := b.GetDSL(from, size, start, end)
 		require.Equal(t, expectDSL, dsl)
 	})
