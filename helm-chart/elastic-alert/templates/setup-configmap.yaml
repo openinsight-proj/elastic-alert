@@ -9,6 +9,8 @@ data:
   config.yaml: |-
     server:
       enabled: true
+      leader_election:
+        enabled: {{ .Values.leader_election.enabled | default false }}
       listen_addr: ":8080"
       datasource:
         type: configmap

@@ -4,6 +4,9 @@
 
 replicaCount: 1
 
+leader_election:
+  enabled: false
+
 image:
   registry: ghcr.io
   repository: openinsight-proj/elastic-alert
@@ -118,3 +121,6 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+clusterRole:
+  create: false

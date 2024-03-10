@@ -1,0 +1,17 @@
+{{- if or .Values.leader_election.enabled .Values.clusterRole.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    {{- include "elastic-alert.labels" . | nindent 4 }}
+  name: {{ include "elastic-alert.fullname" . }}
+rules:
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - get
+      - update
+{{- end }}

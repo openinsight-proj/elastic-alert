@@ -15,6 +15,11 @@ import (
 
 var AppConf *AppConfig
 
+type LeaderElection struct {
+	Enabled   bool   `yaml:"enabled" default:"true"`
+	Namespace string `yaml:"namespace" default:"default"`
+}
+
 type Datasource struct {
 	Type   string         `yaml:"type" default:"configmap"`
 	Config map[string]any `yaml:"config"`
@@ -23,9 +28,10 @@ type Datasource struct {
 // AppConfig is application global configure
 type AppConfig struct {
 	Server struct {
-		ListenAddr string     `yaml:"listen_addr" default:":8080"`
-		Enabled    bool       `yaml:"enabled" default:"true"`
-		DB         Datasource `yaml:"datasource"`
+		ListenAddr     string         `yaml:"listen_addr" default:":8080"`
+		Enabled        bool           `yaml:"enabled" default:"true"`
+		DB             Datasource     `yaml:"datasource"`
+		LeaderElection LeaderElection `yaml:"leader_election"`
 	} `yaml:"server"`
 
 	Exporter struct {

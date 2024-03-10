@@ -1,0 +1,16 @@
+{{- if or .Values.leader_election.enabled .Values.clusterRole.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    {{- include "elastic-alert.labels" . | nindent 4 }}
+  name: {{ include "elastic-alert.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "elastic-alert.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "elastic-alert.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
