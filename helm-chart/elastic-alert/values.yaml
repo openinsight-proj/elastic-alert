@@ -4,12 +4,15 @@
 
 replicaCount: 1
 
+leader_election:
+  enabled: false
+
 image:
   registry: ghcr.io
   repository: openinsight-proj/elastic-alert
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v1.1.5"
+  tag: "v1.2.0"
 
 configReloader:
   image:
@@ -118,3 +121,6 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+clusterRole:
+  create: false
