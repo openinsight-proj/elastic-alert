@@ -6,7 +6,7 @@ import (
 
 	"github.com/openinsight-proj/elastic-alert/pkg/model"
 
-	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
+	elasticsearch8 "github.com/elastic/go-elasticsearch/v8"
 	"github.com/openinsight-proj/elastic-alert/pkg/utils/logger"
 )
 
@@ -16,7 +16,7 @@ type ElasticClient interface {
 }
 
 func NewElasticClient(esConfig model.EsConfig, version string) ElasticClient {
-	client, err := elasticsearch7.NewClient(elasticsearch7.Config{
+	client, err := elasticsearch8.NewClient(elasticsearch8.Config{
 		Addresses: esConfig.Addresses,
 		Username:  esConfig.Username,
 		Password:  esConfig.Password,
@@ -30,7 +30,7 @@ func NewElasticClient(esConfig model.EsConfig, version string) ElasticClient {
 		logger.Logger.Errorln(err)
 		return nil
 	}
-	c := &ElasticClientV7{
+	c := &ElasticClientV8{
 		client: client,
 	}
 	return c

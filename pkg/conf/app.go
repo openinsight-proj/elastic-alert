@@ -78,7 +78,7 @@ type FlagOption struct {
 	Debug      bool   `long:"debug" description:"debug log level"`
 	Verbose    string `short:"v" long:"verbose" description:"log level: debug、info、warn、error" default:"info"`
 	Rule       string `long:"rule" description:"will only run the given single rule. The rule file may be a complete file path"`
-	Zone       string `long:"zone" description:"time zone, e.g like PRC、UTC" default:"PRC"`
+	Zone       string `long:"zone" description:"time zone, e.g like PRC、UTC" default:"UTC"`
 }
 
 // GetLogLevel can get application log level
