@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.22 as build
+FROM --platform=$BUILDPLATFORM golang:1.24 as build
 
 ARG GOPROXY
 ARG TARGETARCH
@@ -19,7 +19,6 @@ USER ${USER_UID}
 
 COPY --from=build /app/elastic-alert  /bin/elastic-alert
 COPY --from=build /app/config.yaml    /etc/config.yaml
-COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 
 ENTRYPOINT ["/bin/elastic-alert"]
 CMD ["--config", "/etc/config.yaml"]
