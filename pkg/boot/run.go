@@ -151,8 +151,7 @@ func (ea *ElasticAlert) eval(r *model.Rule) {
 	hits := ea.runRuleQuery(r)
 	f := NewRuleType(r.Query.Type)
 	if f == nil {
-		t := fmt.Sprintf("rule: %s query type:【%s】 is not validate!", r.FilePath, r.Query.Type)
-		logger.Logger.Errorln(t)
+		logger.Logger.Errorf(fmt.Sprintf("rule: %s query type:[%s] is not validate!", r.FilePath, r.Query.Type))
 		return
 	}
 	matches := f.GetMatches(r, hits)
@@ -220,8 +219,13 @@ func getBufferTime(r *model.Rule, conf *conf.AppConfig) time.Duration {
 }
 
 func (ea *ElasticAlert) runRuleQuery(r *model.Rule) []any {
-	client := xelastic.NewElasticClient(r.ES, r.ES.Version)
 	hits := []any{}
+	client := xelastic.NewElasticClient(r.ES, r.ES.Version)
+	if client == nil {
+		logger.Logger.Infof("%s elasticsearch client is nil", r.UniqueId)
+		return hits
+	}
+
 	size := 10000
 	from := 0
 	j, ok := ea.schedulers.Load(r.UniqueId)
@@ -254,38 +258,38 @@ func (ea *ElasticAlert) runRuleQuery(r *model.Rule) []any {
 	count, statusCode := client.CountByDSL(r.Index, dsl)
 	go func() {
 		ea.addQueryStatusMetrics(r, statusCode)
+		ea.addQueryHitsMetrics(r, count)
 	}()
-	s := fmt.Sprintf("rules: %s index: %s dsl: %s hits_num: %d", r.FilePath, r.Index, dst.String(), count)
-	logger.Logger.Debugln(s)
-	if client != nil {
-		totalPageNum := int(math.Ceil(float64(count) / float64(size)))
-		maxPage := 0
-		if ea.appConf.MaxScrollingCount > 0 {
-			t := math.Min(float64(ea.appConf.MaxScrollingCount), float64(totalPageNum))
-			maxPage = int(t)
-		} else {
-			maxPage = totalPageNum
-		}
-		w := sync.WaitGroup{}
-		w.Add(maxPage)
-		var lock sync.Mutex
-		for p := 1; p <= maxPage; p++ {
-			go func(p int, w *sync.WaitGroup) {
-				from = (p - 1) * size
-				dsl := r.GetQueryStringDSL(from, size, start, end)
-				resultHits, _, code := client.FindByDSL(r.Index, dsl, []string{"time"})
-				ea.addQueryStatusMetrics(r, code)
-				lock.Lock()
-				hits = append(hits, resultHits...)
-				lock.Unlock()
-				w.Done()
-			}(p, &w)
-		}
-		w.Wait()
+
+	totalPageNum := int(math.Ceil(float64(count) / float64(size)))
+	maxPage := 0
+	if ea.appConf.MaxScrollingCount > 0 {
+		t := math.Min(float64(ea.appConf.MaxScrollingCount), float64(totalPageNum))
+		maxPage = int(t)
 	} else {
-		t := fmt.Sprintf("%s elasticsearch client is nil", r.UniqueId)
-		logger.Logger.Errorln(t)
+		maxPage = totalPageNum
 	}
+
+	logger.Logger.Debugf("rules: %s index: %s dsl: %s search count: %d", r.FilePath, r.Index, dst.String(), count)
+	logger.Logger.Debugf("and will query by pagenation: [maxPage: %d, pageSize: %d]", maxPage, size)
+
+	w := sync.WaitGroup{}
+	w.Add(maxPage)
+	var lock sync.Mutex
+	for p := 1; p <= maxPage; p++ {
+		go func(p int, w *sync.WaitGroup) {
+			from = (p - 1) * size
+			dsl := r.GetQueryStringDSL(from, size, start, end)
+			resultHits, _, code := client.FindByDSL(r.Index, dsl, []string{"time"})
+			ea.addQueryStatusMetrics(r, code)
+			lock.Lock()
+			hits = append(hits, resultHits...)
+			lock.Unlock()
+			w.Done()
+		}(p, &w)
+	}
+	w.Wait()
+
 	return hits
 }
 
@@ -308,6 +312,37 @@ func (ea *ElasticAlert) addQueryStatusMetrics(r *model.Rule, statusCode int) {
 			Status:    statusCode,
 			Value:     1,
 		})
+	}
+}
+
+// generate elastic alert metrics,
+func (ea *ElasticAlert) addQueryHitsMetrics(r *model.Rule, count int) {
+	f := r.GetMetricsQueryHitsFingerprint()
+	v, _ := ea.metrics.Load(r.UniqueId)
+	if v != nil {
+		eam := v.(*ElasticAlertPrometheusMetrics)
+		metricsVal, ok := eam.ElasticAlert.Load(f)
+		if ok {
+			// update metrics
+			metric := metricsVal.(ElasticAlertMetrics)
+			metricCopy := metric
+			metricCopy.Value = int64(count)
+			eam.ElasticAlert.Store(f, metricCopy)
+		} else {
+			// create new
+			eam.ElasticAlert.Store(f, ElasticAlertMetrics{
+				UniqueId:     r.UniqueId,
+				Index:        r.Index,
+				Key:          redisx.AlertQueueListKey,
+				Node:         r.Query.Labels["node"],
+				Workload:     r.Query.Labels["workload"],
+				Pod:          r.Query.Labels["pod"],
+				Namespace:    r.Query.Labels["namespace"],
+				Cluster:      r.Query.Labels["cluster"],
+				QueryString:  r.Query.QueryString,
+				BooleanQuery: string(r.Query.BooleanQuery),
+			})
+		}
 	}
 }
 
@@ -355,38 +390,6 @@ func (ea *ElasticAlert) addWebhookNotifyMetrics(uniqueId string, path string, st
 	}
 }
 
-// generate elastic alert metrics,
-func (ea *ElasticAlert) addAlertHitsMetrics(uniqueId string, path string, key string, sampleMsg AlertSampleMessage) {
-	f := model.GetMetricsAlertFingerprint(uniqueId, path, key)
-	v, _ := ea.metrics.Load(uniqueId)
-	if v != nil {
-		eam := v.(*ElasticAlertPrometheusMetrics)
-		metricsVal, ok := eam.ElasticAlert.Load(f)
-		if ok {
-			// update metrics
-			metric := metricsVal.(ElasticAlertMetrics)
-			metricCopy := metric
-			metricCopy.Value = int64(len(sampleMsg.Ids))
-			eam.ElasticAlert.Store(f, metricCopy)
-		} else {
-			// create new
-			eam.ElasticAlert.Store(f, ElasticAlertMetrics{
-				UniqueId:     uniqueId,
-				Key:          key,
-				Node:         sampleMsg.Node,
-				Workload:     sampleMsg.Workload,
-				Pod:          sampleMsg.Pod,
-				Namespace:    sampleMsg.Namespace,
-				Cluster:      sampleMsg.Cluster,
-				Value:        int64(len(sampleMsg.Ids)),
-				QueryString:  sampleMsg.QueryString,
-				BooleanQuery: sampleMsg.BooleanQuery,
-				Index:        sampleMsg.Index,
-			})
-		}
-	}
-}
-
 func (ea *ElasticAlert) pushAlert() {
 	ea.alerts.Range(func(key, value any) bool {
 		ruleUniqueId := key.(string)
@@ -407,8 +410,6 @@ func (ea *ElasticAlert) pushAlert() {
 		if ea.appConf.Alert.Alertmanager.Enabled {
 			ea.pushToRedis(alert, msg)
 		}
-
-		go ea.addAlertHitsMetrics(alert.Rule.UniqueId, alert.Rule.FilePath, redisx.AlertQueueListKey, msg)
 
 		if alert.HasResolved() {
 			ea.alerts.Delete(ruleUniqueId)

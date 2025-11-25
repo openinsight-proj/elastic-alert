@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"strings"
 
@@ -33,8 +32,7 @@ func (ec *ElasticClientV8) FindByDSL(index string, dsl string, source []string) 
 	hits := []any{}
 	totalValue := 0
 	if e != nil {
-		t := fmt.Sprintf("%s : %s", index, e.Error())
-		logger.Logger.Errorln(t)
+		logger.Logger.Errorf("%s : %s", index, e.Error())
 		return hits, totalValue, res.StatusCode
 	} else {
 		m := ec.parseResponseBody(res)
@@ -57,8 +55,7 @@ func (ec *ElasticClientV8) CountByDSL(index string, dsl string) (int, int) {
 	}
 	res, e := req.Do(ctx, ec.client)
 	if e != nil {
-		t := fmt.Sprintf("%s : %s", index, e.Error())
-		logger.Logger.Errorln(t)
+		logger.Logger.Errorf("%s : %s", index, e.Error())
 		return 0, res.StatusCode
 	} else {
 		m := ec.parseResponseBody(res)

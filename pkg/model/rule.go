@@ -210,6 +210,11 @@ func (rl *Rule) GetMetricsQueryFingerprint(statusCode int) string {
 	return utils.MD5(strings.Join(f, ""))
 }
 
+func (rl *Rule) GetMetricsQueryHitsFingerprint() string {
+	f := []string{rl.UniqueId, rl.FilePath, rl.GetEsAddress(), rl.Index}
+	return utils.MD5(strings.Join(f, ""))
+}
+
 func (rl *Rule) GetMetricsOpRedisFingerprint(cmd string, key string, statusCode int) string {
 	return GetMetricsOpRedisFingerprint(rl.UniqueId, rl.FilePath, cmd, key, statusCode)
 }
